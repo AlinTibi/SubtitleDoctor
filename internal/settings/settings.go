@@ -3,9 +3,9 @@ package settings
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/AlinTibi/SubtitleDoctor/internal/model"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type Settings struct {
@@ -31,7 +31,7 @@ func Validate(s Settings) error {
 	if s.MaxChars < 10 || s.MaxChars > 500 || s.MaxLines < 1 || s.MaxLines > 20 || s.CPS < 1 || s.CPS > 1000 {
 		return fmt.Errorf("invalid line or reading-speed limits")
 	}
-	if s.Suffix == "" || strings.ContainsAny(s.Suffix, `<>:"/\|?*`) {
+	if !model.ValidSuffix(s.Suffix) {
 		return fmt.Errorf("invalid output suffix")
 	}
 	if s.Encoding != "UTF-8" && s.Encoding != "UTF-16LE" && s.Encoding != "Windows-1252" {

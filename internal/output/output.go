@@ -3,6 +3,7 @@ package output
 import (
 	"bytes"
 	"fmt"
+	"github.com/AlinTibi/SubtitleDoctor/internal/model"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,11 +11,11 @@ import (
 )
 
 func safeSuffix(s string) bool {
-	return s != "" && !strings.ContainsAny(s, `<>:"/\|?*`) && !strings.HasSuffix(s, ".") && !strings.HasSuffix(s, " ")
+	return model.ValidSuffix(s)
 }
 func Candidate(source, folder, suffix, format string, n int) (string, error) {
 	if !safeSuffix(suffix) {
-		return "", fmt.Errorf("suffix must be nonempty and contain no Windows filename special characters")
+		return "", fmt.Errorf("suffix must be nonempty, contain no Windows filename special characters, and not end in a dot or space")
 	}
 	if format != "srt" && format != "vtt" && format != "ass" && format != "ssa" {
 		return "", fmt.Errorf("unsupported output format")

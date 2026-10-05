@@ -444,28 +444,11 @@ func (a *App) StartBatch(paths []string, o repair.Operation, save bool, encoding
 				}
 				saved := ""
 				if err == nil && save {
-					var data []byte
-					data, err = convert.Encode(d, target, encoding, d.LineEnding, d.BOM)
-					if err == nil && ctx.Err() == nil {
-						if prefs.Overwrite {
-							current, readErr := os.ReadFile(path)
-							if readErr != nil {
-								err = readErr
-							} else if fmt.Sprintf("%x", sha256.Sum256(current)) != f.Doc.SourceHash {
-								err = fmt.Errorf("source changed since import; reopen the file before replacing it")
-							}
-						}
-						if err == nil {
-							saved, err = output.Save(path, prefs.OutputFolder, prefs.Suffix, target, data, prefs.Overwrite, confirmed)
-							if err == nil && prefs.Overwrite {
-								d.SourceHash = fmt.Sprintf("%x", sha256.Sum256(data))
-							}
-						}
-					}
+					d, saved, err = writeDocument(ctx, d, target, encoding, prefs, confirmed)
 				}
 				a.mu.Lock()
 				if err == nil && (ctx.Err() == nil || saved != "") {
-					if o.Kind != "" {
+					if o.Kind != "" || (saved != "" && prefs.Overwrite) {
 						f.Commit(d, target, logs)
 					}
 					if saved != "" {
@@ -493,6 +476,45 @@ func (a *App) StartBatch(paths []string, o repair.Operation, save bool, encoding
 		}
 	}()
 	return nil
+}
+
+// An empty explicitEncoding means an operation's encoding intent takes priority
+// over settings. Only Save / Export supplies a nonempty explicit override.
+func writeDocument(ctx context.Context, d model.Document, target, explicitEncoding string, prefs settings.Settings, confirmed bool) (model.Document, string, error) {
+	encoding := explicitEncoding
+	if encoding == "" {
+		encoding = d.OutputEncoding
+	}
+	if encoding == "" {
+		encoding = prefs.Encoding
+	}
+	data, err := convert.Encode(d, target, encoding, d.LineEnding, d.BOM)
+	if err != nil {
+		return d, "", err
+	}
+	written := d
+	if prefs.Overwrite {
+		current, err := os.ReadFile(d.Path)
+		if err != nil {
+			return d, "", err
+		}
+		if fmt.Sprintf("%x", sha256.Sum256(current)) != d.SourceHash {
+			return d, "", fmt.Errorf("source changed since import; reopen the file before replacing it")
+		}
+		written, err = parser.ParseEncoded(d.Path, data, encoding)
+		if err != nil {
+			return d, "", fmt.Errorf("cannot reparse replacement: %w", err)
+		}
+		written.OutputEncoding = encoding
+	}
+	if err := ctx.Err(); err != nil {
+		return d, "", err
+	}
+	saved, err := output.Save(d.Path, prefs.OutputFolder, prefs.Suffix, target, data, prefs.Overwrite, confirmed)
+	if err != nil {
+		return d, "", err
+	}
+	return written, saved, nil
 }
 func (a *App) ExportReport(format string) (string, error) {
 	a.mu.Lock()

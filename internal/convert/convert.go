@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"github.com/AlinTibi/SubtitleDoctor/internal/markup"
 	"github.com/AlinTibi/SubtitleDoctor/internal/model"
 	"github.com/AlinTibi/SubtitleDoctor/internal/parser"
 	"golang.org/x/text/encoding/charmap"
@@ -39,7 +40,7 @@ func text(s, from, to string) string {
 			s = strings.ReplaceAll(s, "<"+t+">", `{\`+t+`1}`)
 			s = strings.ReplaceAll(s, "</"+t+">", `{\`+t+`0}`)
 		}
-		s = regexp.MustCompile(`<[^>]*>`).ReplaceAllString(s, "")
+		s = markup.StripHTML(s)
 	}
 	if ass(to) {
 		s = strings.ReplaceAll(s, "\n", `\N`)

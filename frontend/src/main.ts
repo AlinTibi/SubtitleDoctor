@@ -358,7 +358,7 @@ function openDialog(mode: string) {
   let title = "";
   if (mode === "repair") {
     title = "Repair subtitles";
-    html = `<p>Select the repairs to apply. Scanning never changes your file.</p><div class="checks">${check("renumber", "Renumber SRT entries", true)}${check("empty", "Remove empty entries", true)}${check("duplicates", "Remove exact duplicates", true)}${check("order", "Sort entries by start time", true)}${check("duration", "Fix zero / negative durations (review inferred end times)")}${check("lineEndings", "Normalize line endings to CRLF", true)}${check("spacing", "Normalize spacing", true)}${check("utf8", "Convert encoding to UTF-8", true)}${check("removeBOM", "Remove UTF-8 BOM", true)}${check("tags", "Clean unbalanced / unsupported HTML tag delimiters")}</div><p class="muted">Unbalanced tags and unreadable timestamps require manual review. Dialogue is never invented.</p>`;
+    html = `<p>Select the repairs to apply. Scanning never changes your file.</p><div class="checks">${check("renumber", "Renumber SRT entries", true)}${check("empty", "Remove empty entries", true)}${check("duplicates", "Remove exact duplicates", true)}${check("order", "Sort entries by start time", true)}${check("duration", "Fix zero / negative durations (review inferred end times)")}${check("lineEndings", "Normalize line endings to CRLF", true)}${check("spacing", "Normalize spacing", true)}${check("utf8", "Convert encoding to UTF-8", true)}${check("removeBOM", "Remove UTF-8 BOM", true)}${check("tags", "Clean unmatched known HTML tag delimiters")}</div><p class="muted">Unbalanced tags and unreadable timestamps require manual review. Dialogue is never invented.</p>`;
     getOperation = () => ({
       kind: "repair",
       repair: Object.fromEntries(
@@ -411,7 +411,7 @@ function openDialog(mode: string) {
   }
   if (mode === "text") {
     title = "Text & line tools";
-    html = `${select("tool", "Operation", ["trim", "spaces", "blank", "upper", "lower", "sentence", "quotes", "html", "ass", "join", "wrap"], "trim")}<p class="muted">Quotes: explicitly convert straight double quotes to curly pairs. HTML / ASS removes matching tag delimiters. Case tools also affect inline tag text: review the preview.</p><div class="fields">${field("maxChars", "Max characters per line", prefs.maxChars, "number")}${field("maxLines", "Max lines per subtitle", prefs.maxLines, "number")}</div><p>Wrap never cuts words. If text cannot fit the configured limits, no change is applied.</p>`;
+    html = `${select("tool", "Operation", ["trim", "spaces", "blank", "upper", "lower", "sentence", "quotes", "html", "ass", "join", "wrap"], "trim")}<p class="muted">Quotes: explicitly convert straight double quotes to curly pairs. HTML / ASS removes matching tag delimiters. Case and quote tools preserve inline tags and ASS overrides. HTML removal keeps line-break separation.</p><div class="fields">${field("maxChars", "Max characters per line", prefs.maxChars, "number")}${field("maxLines", "Max lines per subtitle", prefs.maxLines, "number")}</div><p>Wrap never cuts words. If text cannot fit the configured limits, no change is applied.</p>`;
     getOperation = () => ({
       kind: "text",
       tool: val("tool"),
@@ -425,7 +425,7 @@ function openDialog(mode: string) {
   }
   if (mode === "save") {
     title = "Save / Export";
-    html = `<p>Output folder: <strong>${esc(prefs.outputFolder || "Not selected")}</strong></p><button type="button" id="pick-save-folder">Choose output folder…</button><div class="fields">${select("save-format", "Format", ["current target", "srt", "ass", "ssa", "vtt"], prefs.format === "source" ? "current target" : prefs.format)}${select("save-encoding", "Encoding", ["UTF-8", "UTF-16LE", "Windows-1252"], prefs.encoding)}</div>${check("all", "Save every file in the queue")}<p class="${prefs.overwrite ? "warning" : "muted"}">${prefs.overwrite ? "Replace originals enabled. You must confirm a native warning. A backup is created first." : `New files use suffix ${esc(prefs.suffix)}. Existing output files get (2), (3), etc.`}</p><p class="warning" id="save-warnings"></p>`;
+    html = `<p>Output folder: <strong>${esc(prefs.outputFolder || "Not selected")}</strong></p><button type="button" id="pick-save-folder">Choose output folder…</button><div class="fields">${select("save-format", "Format", ["current target", "srt", "ass", "ssa", "vtt"], prefs.format === "source" ? "current target" : prefs.format)}${select("save-encoding", "Encoding", ["automatic", "UTF-8", "UTF-16LE", "Windows-1252"], "automatic")}</div><p class="muted">Automatic uses the encoding chosen by Repair, otherwise your preferred encoding (${esc(prefs.encoding)}). Select an encoding here to override it.</p>${check("all", "Save every file in the queue")}<p class="${prefs.overwrite ? "warning" : "muted"}">${prefs.overwrite ? "Replace originals enabled. You must confirm a native warning. A backup is created first." : `New files use suffix ${esc(prefs.suffix)}. Existing output files get (2), (3), etc.`}</p><p class="warning" id="save-warnings"></p>`;
   }
   if (!["settings", "save"].includes(mode)) html += operationCommon();
   $("#dialog-title").textContent = title;
@@ -528,7 +528,12 @@ $("#dialog-form").onsubmit = (e) => {
           format === "current target"
             ? { kind: "" }
             : { kind: "convert", format };
-        await api.StartBatch(paths, o, true, val("save-encoding"));
+        await api.StartBatch(
+          paths,
+          o,
+          true,
+          val("save-encoding") === "automatic" ? "" : val("save-encoding"),
+        );
         results = [];
         errors = [];
         setBusy(true);
@@ -541,7 +546,7 @@ $("#dialog-form").onsubmit = (e) => {
             checked("all") ? queue.map((f) => f.path) : [path],
             previewOp,
             checked("save-batch"),
-            prefs.encoding,
+            "",
           );
           results = [];
           errors = [];

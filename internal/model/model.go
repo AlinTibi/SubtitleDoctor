@@ -1,10 +1,26 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Numbering does not distinguish duplicates, but cue/style metadata does.
-func DuplicateKey(e Entry) string {
-	return fmt.Sprintf("%d/%d/%q/%q", e.Start, e.End, e.Text, e.Fields)
+func DuplicateKey(d Document, e Entry) string {
+	metadata := e.Fields
+	if d.Format == "ass" || d.Format == "ssa" {
+		metadata = nil
+		for i, value := range e.Fields {
+			if i < len(d.EventFormat) {
+				switch strings.ToLower(strings.TrimSpace(d.EventFormat[i])) {
+				case "start", "end", "text":
+					continue
+				}
+			}
+			metadata = append(metadata, value)
+		}
+	}
+	return fmt.Sprintf("%d/%d/%q/%q", e.Start, e.End, e.Text, metadata)
 }
 
 type Entry struct {
@@ -22,16 +38,17 @@ type Issue struct {
 	Severity string `json:"severity"`
 }
 type Document struct {
-	SourceHash  string   `json:"-"`
-	Path        string   `json:"path"`
-	Format      string   `json:"format"`
-	Encoding    string   `json:"encoding"`
-	LineEnding  string   `json:"lineEnding"`
-	BOM         bool     `json:"bom"`
-	Entries     []Entry  `json:"entries"`
-	Header      []string `json:"header,omitempty"`
-	EventFormat []string `json:"eventFormat,omitempty"`
-	ParseIssues []Issue  `json:"parseIssues"`
+	SourceHash     string   `json:"-"`
+	Path           string   `json:"path"`
+	Format         string   `json:"format"`
+	Encoding       string   `json:"encoding"`
+	OutputEncoding string   `json:"outputEncoding,omitempty"`
+	LineEnding     string   `json:"lineEnding"`
+	BOM            bool     `json:"bom"`
+	Entries        []Entry  `json:"entries"`
+	Header         []string `json:"header,omitempty"`
+	EventFormat    []string `json:"eventFormat,omitempty"`
+	ParseIssues    []Issue  `json:"parseIssues"`
 }
 type Report struct {
 	Path          string   `json:"path"`

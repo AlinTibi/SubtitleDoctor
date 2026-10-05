@@ -54,6 +54,13 @@ Save / Export. Outputs use `_fixed` unless configured otherwise. Existing names
 are protected with exclusive file creation and numbered collisions:
 `movie_fixed.srt`, `movie_fixed (2).srt`, etc.
 
+Suffixes must be nonempty, contain no Windows filename special/control characters,
+and cannot end in a dot or space. Settings and export share this validation.
+Automatic export encoding honors a prior UTF-8 repair; otherwise it uses the
+preferred encoding in Settings. Choosing an encoding explicitly in Save / Export
+overrides that choice. Batch Repair + Save honors the repair's encoding.
+Replacing a source reparses the written content and updates its encoding/BOM state.
+
 Replacing originals is optional and requires confirmation in a native warning
 for each save job. A unique `.bak`, `.bak.2`, etc. backup must be written first.
 Replacement uses a temporary file and checks that the source has not changed
@@ -140,8 +147,12 @@ metadata. The supported subset and conservative export checks are documented her
   Windows-1252; unrepresentable output characters cause an error.
 - Unsupported ASS event layouts, multiple event formats and unreadable blocks
   require external source correction. Text must be the last ASS event field.
-- Automatic tag cleanup removes unbalanced/unsupported HTML delimiters while preserving text. Advanced ASS markup still
-  requires manual review. Text case tools can affect inline formatting strings.
+- Automatic tag cleanup removes unmatched recognized HTML/WebVTT delimiters and
+  preserves unsupported syntax for review. Class, voice, language and ruby spans
+  follow the [WebVTT cue text rules](https://www.w3.org/TR/webvtt1/#webvtt-cue-text).
+  Line-break tags retain their separation when formatting is removed. Case tools
+  preserve tag attributes, entities and ASS override commands. Advanced ASS markup
+  still requires manual review.
 - Whole-word matching uses RE2 ASCII word boundaries. Regex replacement uses Go
   expansion syntax; use `${1}suffix` when a capture is followed by letters.
 - Splitting distributes words around the timing midpoint; it does not infer speech

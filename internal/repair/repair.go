@@ -3,6 +3,7 @@ package repair
 import (
 	"fmt"
 	"github.com/AlinTibi/SubtitleDoctor/internal/analyzer"
+	"github.com/AlinTibi/SubtitleDoctor/internal/markup"
 	"github.com/AlinTibi/SubtitleDoctor/internal/model"
 	timing "github.com/AlinTibi/SubtitleDoctor/internal/sync"
 	"regexp"
@@ -87,16 +88,18 @@ func Fix(d *model.Document, o Options) []string {
 	entries := []model.Entry{}
 	seen := map[string]bool{}
 	for i, e := range d.Entries {
-		if o.Empty && strings.TrimSpace(analyzer.Plain(e.Text)) == "" {
+		if o.Empty && !e.Invalid && strings.TrimSpace(analyzer.Plain(e.Text)) == "" {
 			log = append(log, fmt.Sprintf("Removed empty entry %d", i+1))
 			continue
 		}
-		key := model.DuplicateKey(e)
+		key := model.DuplicateKey(*d, e)
 		if o.Duplicates && !e.Invalid && seen[key] {
 			log = append(log, fmt.Sprintf("Removed duplicate %d", i+1))
 			continue
 		}
-		seen[key] = true
+		if !e.Invalid {
+			seen[key] = true
+		}
 		if o.Spacing {
 			t := normalize(e.Text)
 			if t != e.Text {
@@ -143,6 +146,7 @@ func Fix(d *model.Document, o Options) []string {
 	}
 	if o.UTF8 {
 		d.Encoding = "UTF-8"
+		d.OutputEncoding = "UTF-8"
 		log = append(log, "Converted encoding to UTF-8")
 	}
 	if o.RemoveBOM {
@@ -226,39 +230,43 @@ func Text(d *model.Document, o Operation) error {
 		case "blank":
 			s = regexp.MustCompile(`\n[ \t]*\n(?:[ \t]*\n)+`).ReplaceAllString(s, "\n\n")
 		case "upper":
-			s = strings.ToUpper(s)
+			s = markup.MapDialogue(s, strings.ToUpper)
 		case "lower":
-			s = strings.ToLower(s)
+			s = markup.MapDialogue(s, strings.ToLower)
 		case "sentence":
 			next := true
-			s = strings.Map(func(r rune) rune {
-				if unicode.IsLetter(r) {
-					if next {
-						next = false
-						return unicode.ToUpper(r)
+			s = markup.MapDialogue(s, func(part string) string {
+				return strings.Map(func(r rune) rune {
+					if unicode.IsLetter(r) {
+						if next {
+							next = false
+							return unicode.ToUpper(r)
+						}
+						return unicode.ToLower(r)
 					}
-					return unicode.ToLower(r)
-				}
-				if r == '.' || r == '!' || r == '?' {
-					next = true
-				}
-				return r
-			}, s)
+					if r == '.' || r == '!' || r == '?' {
+						next = true
+					}
+					return r
+				}, part)
+			})
 		case "quotes":
 			open := true
-			s = strings.Map(func(r rune) rune {
-				if r == '"' {
-					if open {
-						open = false
-						return '“'
+			s = markup.MapDialogue(s, func(part string) string {
+				return strings.Map(func(r rune) rune {
+					if r == '"' {
+						if open {
+							open = false
+							return '“'
+						}
+						open = true
+						return '”'
 					}
-					open = true
-					return '”'
-				}
-				return r
-			}, s)
+					return r
+				}, part)
+			})
 		case "html":
-			s = regexp.MustCompile(`<[^>]*>`).ReplaceAllString(s, "")
+			s = markup.StripHTML(s)
 		case "ass":
 			s = regexp.MustCompile(`\{[^}]*\}`).ReplaceAllString(s, "")
 		case "join":

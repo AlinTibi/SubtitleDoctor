@@ -49,3 +49,21 @@ verified. Backup/replacement, regex, two-point sync, wrapping, encoding,
 undo/redo and reports have automated coverage; they were not all exercised
 through the desktop interface. No claim of exhaustive manual verification
 or a hundreds-of-files stress test is made.
+
+## Correctness follow-up
+
+The focused PR review pass added regression tests for ASS/SSA duplicate
+comparison using current timing/text and style/name/effect metadata, invalid
+cue preservation, shared settings/output suffix validation, WebVTT class,
+voice, language and ruby markup, HTML line breaks, and markup-safe case tools.
+Encoding tests perform actual safe writes and source replacement to verify
+UTF-8 repair precedence, explicit export overrides, BOM state, backups and
+subsequent saves.
+
+The rebuilt executable imported a disposable WebVTT cue containing voice,
+class and line-break tags with zero issues. Uppercase preview and apply
+changed only dialogue; the tag spellings remained identical. Save / Export
+displayed automatic encoding with the repair/preference rule and explicit
+override options. The temporary fixture was deleted and settings were left
+unchanged. Replacement encoding tests and ASS/SSA edit-created duplicates
+were verified automatically rather than through every desktop workflow.

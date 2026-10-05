@@ -59,6 +59,29 @@ func Open(path string) (model.Document, error) {
 	}
 	return Parse(path, b)
 }
+
+// ParseEncoded uses a known output encoding instead of heuristic import
+// detection. Some Windows-1252 byte sequences are also valid UTF-8.
+func ParseEncoded(path string, data []byte, encoding string) (model.Document, error) {
+	decoded := data
+	if encoding == "Windows-1252" {
+		var err error
+		decoded, err = charmap.Windows1252.NewDecoder().Bytes(data)
+		if err != nil {
+			return model.Document{}, err
+		}
+	} else if encoding != "UTF-8" && encoding != "UTF-16LE" {
+		return model.Document{}, fmt.Errorf("unsupported known encoding %q", encoding)
+	}
+	d, err := Parse(path, decoded)
+	if err != nil {
+		return d, err
+	}
+	d.SourceHash = fmt.Sprintf("%x", sha256.Sum256(data))
+	d.Encoding = encoding
+	d.BOM = encoding == "UTF-16LE" || (encoding == "UTF-8" && bytes.HasPrefix(data, []byte{239, 187, 191}))
+	return d, nil
+}
 func Parse(path string, b []byte) (model.Document, error) {
 	f := strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
 	if f != "srt" && f != "vtt" && f != "ass" && f != "ssa" {
@@ -76,12 +99,14 @@ func Parse(path string, b []byte) (model.Document, error) {
 	}
 	var err error
 	if bytes.HasPrefix(b, []byte{255, 254}) || bytes.HasPrefix(b, []byte{254, 255}) {
+		d.BOM = true
+		d.Encoding = "UTF-16LE"
 		order := unicode.LittleEndian
 		if b[0] == 254 {
 			order = unicode.BigEndian
+			d.Encoding = "UTF-16BE"
 		}
 		b, err = unicode.UTF16(order, unicode.ExpectBOM).NewDecoder().Bytes(b)
-		d.Encoding = "UTF-16"
 	} else if !utf8.Valid(b) {
 		b, err = charmap.Windows1252.NewDecoder().Bytes(b)
 		d.Encoding = "Windows-1252 (assumed)"

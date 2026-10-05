@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"github.com/AlinTibi/SubtitleDoctor/internal/markup"
 	"github.com/AlinTibi/SubtitleDoctor/internal/model"
 	"regexp"
 	"sort"
@@ -10,9 +11,8 @@ import (
 )
 
 var tags = regexp.MustCompile(`<[^>]*>|\{[^}]*\}`)
-var htmlTags = regexp.MustCompile(`<[^>]+>`)
 
-func Plain(s string) string { return tags.ReplaceAllString(s, "") }
+func Plain(s string) string { return tags.ReplaceAllString(markup.StripHTML(s), "") }
 func Scan(d model.Document, maxLine int, cps float64) []model.Issue {
 	out := append([]model.Issue{}, d.ParseIssues...)
 	add := func(code string, i int, msg string) {
@@ -47,11 +47,13 @@ func Scan(d model.Document, maxLine int, cps float64) []model.Issue {
 			add("duplicate_timestamp", i, "Duplicated timestamps")
 		}
 		times[key] = true
-		key = model.DuplicateKey(e)
+		key = model.DuplicateKey(d, e)
 		if !e.Invalid && exact[key] {
 			add("duplicate", i, "Exact duplicate")
 		}
-		exact[key] = true
+		if !e.Invalid {
+			exact[key] = true
+		}
 		if d.Format == "srt" && e.Index != i+1 {
 			add("numbering", i, "SRT numbering is not sequential")
 		}
@@ -87,29 +89,5 @@ func Scan(d model.Document, maxLine int, cps float64) []model.Issue {
 	return out
 }
 func Suspicious(s string) bool {
-	if strings.Count(s, "{") != strings.Count(s, "}") || strings.Count(s, "<") != strings.Count(s, ">") {
-		return true
-	}
-	stack := []string{}
-	for _, tag := range htmlTags.FindAllString(s, -1) {
-		x := strings.ToLower(strings.Trim(tag, "<>"))
-		if strings.HasPrefix(x, "/") {
-			x = strings.TrimPrefix(x, "/")
-			if len(stack) == 0 || stack[len(stack)-1] != x {
-				return true
-			}
-			stack = stack[:len(stack)-1]
-		} else {
-			parts := strings.Fields(x)
-			if len(parts) == 0 {
-				return true
-			}
-			x = parts[0]
-			if x != "b" && x != "i" && x != "u" && x != "font" && x != "c" && x != "v" && x != "ruby" && x != "rt" {
-				return true
-			}
-			stack = append(stack, x)
-		}
-	}
-	return len(stack) != 0
+	return markup.Suspicious(s)
 }
