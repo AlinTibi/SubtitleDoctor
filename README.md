@@ -6,11 +6,18 @@ synchronizing, converting and batch-processing subtitle files.
 Built with Go, Wails v2 and vanilla TypeScript. No accounts, telemetry, cloud
 services, uploads, runtime PowerShell or runtime downloads.
 
+## Current release and download
+
+[Subtitle Doctor v1.0.0](https://github.com/AlinTibi/SubtitleDoctor/releases/tag/v1.0.0)
+is the current Windows x64 release.
+
+[Download the portable ZIP](https://github.com/AlinTibi/SubtitleDoctor/releases/download/v1.0.0/SubtitleDoctor-v1.0.0-win-x64.zip),
+extract it, and run `SubtitleDoctor.exe`. Keep the extracted files together.
+Microsoft Edge WebView2 Runtime is required. Install it separately if missing.
+
 ## Screenshots
 
-Screenshot placeholder: the Windows interface has a file queue on the left,
-a timing and text table in the center, inspection/report details on the right,
-and a job progress bar at the bottom.
+![Subtitle Doctor Windows application](docs/images/main.webp)
 
 ## Supported formats
 
@@ -100,8 +107,8 @@ wails build -clean -s
 
 The frontend **must be built before** `wails build -s`, which skips that step.
 The exact Wails CLI version must match `go.mod` (currently **v2.16.0**).
-GitHub Actions repeats this sequence on Windows and uploads an executable
-artifact without creating a release or tag.
+Pull request CI repeats this sequence on Windows. The tag-triggered release
+workflow packages the portable ZIP and checksum for approved releases.
 
 ## Keyboard shortcuts
 
@@ -165,3 +172,19 @@ metadata. The supported subset and conservative export checks are documented her
 ## License
 
 [MIT](LICENSE). Copyright (c) 2026 AlinTibi.
+
+## Support and security
+
+For software questions, email [support@almarfeld.com](mailto:support@almarfeld.com).
+Report reproducible bugs and feature requests in [Subtitle Doctor issues](https://github.com/AlinTibi/SubtitleDoctor/issues).
+Do not post private files or credentials in public issues.
+
+Report vulnerabilities privately to [security@almarfeld.com](mailto:security@almarfeld.com).
+See [SUPPORT.md](SUPPORT.md) and [SECURITY.md](SECURITY.md).
+
+---
+
+**ALMARFELD** · Independent software development · [almarfeld.com](https://almarfeld.com)
+
+[Subtitle Doctor product page](https://almarfeld.com/software/subtitle-doctor/) ·
+[General enquiries](mailto:contact@almarfeld.com) · [MIT license](LICENSE)

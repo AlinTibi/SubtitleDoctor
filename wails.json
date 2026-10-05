@@ -6,6 +6,6 @@
  "frontend:build": "npm run build",
  "frontend:dev:watcher": "npm run dev",
  "frontend:dev:serverUrl": "auto",
- "author": {"name":"AlinTibi","email":"alin.radulescu01@gmail.com"},
+ "author": {"name":"AlinTibi","email":"contact@almarfeld.com"},
  "info":{"productName":"Subtitle Doctor","productVersion":"1.0.0","companyName":"AlinTibi","copyright":"Copyright (c) 2026 AlinTibi","comments":"Offline subtitle inspection and repair"}
 }
