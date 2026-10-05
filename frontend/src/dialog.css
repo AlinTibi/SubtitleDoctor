@@ -1,0 +1,21 @@
+/* Keep confirmation actions visible when tools have many options. */
+dialog .dialog-actions {
+  position: sticky;
+  bottom: 0;
+  background: #1a222e;
+  padding-bottom: 8px;
+  z-index: 2;
+}
+dialog .checks {
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 14px;
+}
+dialog .checks .check {
+  align-items: flex-start;
+  line-height: 1.5;
+}
+@media (max-width: 700px) {
+  dialog .checks {
+    grid-template-columns: 1fr;
+  }
+}

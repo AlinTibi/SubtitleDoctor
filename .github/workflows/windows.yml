@@ -1,0 +1,43 @@
+name: Windows build and tests
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend explicitly
+        working-directory: frontend
+        run: npm run build
+      - name: Go vet
+        run: go vet ./...
+      - name: Go tests
+        run: go test ./...
+      - name: Install matching Wails CLI
+        shell: pwsh
+        run: |
+          $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
+          go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
+      - name: Build Windows executable
+        run: wails build -clean -s
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SubtitleDoctor-windows-amd64
+          path: build/bin/SubtitleDoctor.exe

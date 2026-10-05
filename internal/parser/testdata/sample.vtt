@@ -1,0 +1,9 @@
+WEBVTT
+
+intro
+00:00:03.000 --> 00:00:05.000 align:start
+<i>Hello, world.</i>
+
+00:00:06.000 --> 00:00:08.000
+Two lines
+of original sample text.
