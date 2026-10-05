@@ -2,4 +2,5 @@
 
 package main
 
-func checkRuntime() error { return nil }
+func checkRuntime() error        { return nil }
+func showStartupError(err error) {}

@@ -5,7 +5,19 @@ package main
 import (
 	"fmt"
 	"github.com/wailsapp/go-webview2/webviewloader"
+	"syscall"
+	"unsafe"
 )
+
+// Production Windows binaries have no console, so startup failures need a
+// native dialog even when the WebView cannot be created.
+func showStartupError(err error) {
+	message, _ := syscall.UTF16PtrFromString(err.Error())
+	title, _ := syscall.UTF16PtrFromString("Subtitle Doctor could not start")
+	syscall.NewLazyDLL("user32.dll").NewProc("MessageBoxW").Call(
+		0, uintptr(unsafe.Pointer(message)), uintptr(unsafe.Pointer(title)), 0x10,
+	)
+}
 
 // Check before Wails starts so even its default download strategy cannot run.
 func checkRuntime() error {
