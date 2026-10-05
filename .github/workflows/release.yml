@@ -1,0 +1,83 @@
+name: Windows portable release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend explicitly
+        working-directory: frontend
+        run: npm run build
+      - name: Go vet
+        run: go vet ./...
+      - name: Go tests
+        run: go test ./...
+      - name: Install matching Wails CLI
+        run: |
+          $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
+          if ($LASTEXITCODE -ne 0) { throw 'Could not resolve Wails version' }
+          go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
+      - name: Set product version from release tag
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          if ($tag -notmatch '^v([0-9]+\.[0-9]+\.[0-9]+)$') {
+            throw 'Release tags must use vMAJOR.MINOR.PATCH for Windows version metadata'
+          }
+          $version = $Matches[1]
+          foreach ($part in $version.Split('.')) {
+            if ([int64]$part -gt 65535) { throw 'Windows version components must be at most 65535' }
+          }
+          $config = Get-Content -LiteralPath wails.json -Raw | ConvertFrom-Json
+          $config.info.productVersion = $version
+          [IO.File]::WriteAllText((Join-Path $PWD 'wails.json'), ($config | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
+      - name: Build Windows executable
+        run: wails build -clean -s
+      - name: Package portable ZIP and SHA-256
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $stage = Join-Path $env:RUNNER_TEMP 'subtitle-doctor-portable'
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          Copy-Item -LiteralPath 'build/bin/SubtitleDoctor.exe' -Destination (Join-Path $stage 'SubtitleDoctor.exe')
+          Copy-Item -LiteralPath 'LICENSE' -Destination (Join-Path $stage 'LICENSE')
+          Copy-Item -LiteralPath 'README.md' -Destination (Join-Path $stage 'README.md')
+          $zipName = "SubtitleDoctor-${tag}-win-x64.zip"
+          $zipPath = Join-Path $env:RUNNER_TEMP $zipName
+          $files = 'SubtitleDoctor.exe', 'LICENSE', 'README.md' | ForEach-Object { Join-Path $stage $_ }
+          Compress-Archive -LiteralPath $files -DestinationPath $zipPath -CompressionLevel Optimal
+          $hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText("$zipPath.sha256", "$hash  $zipName`n", [Text.UTF8Encoding]::new($false))
+      - name: Create GitHub release and upload both assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $zipPath = Join-Path $env:RUNNER_TEMP "SubtitleDoctor-${tag}-win-x64.zip"
+          gh release create $tag $zipPath "$zipPath.sha256" --verify-tag --title "Subtitle Doctor $tag" --generate-notes
