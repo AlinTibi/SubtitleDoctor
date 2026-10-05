@@ -47,8 +47,8 @@ func Scan(d model.Document, maxLine int, cps float64) []model.Issue {
 			add("duplicate_timestamp", i, "Duplicated timestamps")
 		}
 		times[key] = true
-		key += "/" + e.Text
-		if exact[key] {
+		key = model.DuplicateKey(e)
+		if !e.Invalid && exact[key] {
 			add("duplicate", i, "Exact duplicate")
 		}
 		exact[key] = true

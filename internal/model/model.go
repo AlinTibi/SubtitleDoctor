@@ -1,5 +1,12 @@
 package model
 
+import "fmt"
+
+// Numbering does not distinguish duplicates, but cue/style metadata does.
+func DuplicateKey(e Entry) string {
+	return fmt.Sprintf("%d/%d/%q/%q", e.Start, e.End, e.Text, e.Fields)
+}
+
 type Entry struct {
 	Index   int      `json:"index"`
 	Start   int64    `json:"start"`

@@ -12,6 +12,20 @@ func TestRepair(t *testing.T) {
 		t.Fatal(d)
 	}
 }
+
+func TestDuplicatesPreserveCueMetadata(t *testing.T) {
+	d := model.Document{Entries: []model.Entry{
+		{Start: 1000, End: 2000, Text: "Hello", Fields: []string{"Top"}},
+		{Start: 1000, End: 2000, Text: "Hello", Fields: []string{"Bottom"}},
+		{Start: 1000, End: 2000, Text: "Hello", Fields: []string{"Top"}},
+		{Text: "Unreadable", Invalid: true},
+		{Text: "Unreadable", Invalid: true},
+	}}
+	Fix(&d, Options{Duplicates: true})
+	if len(d.Entries) != 4 || d.Entries[1].Fields[0] != "Bottom" {
+		t.Fatalf("distinct metadata or invalid cues were removed: %+v", d.Entries)
+	}
+}
 func TestReplace(t *testing.T) {
 	for _, tc := range []struct {
 		o    Operation

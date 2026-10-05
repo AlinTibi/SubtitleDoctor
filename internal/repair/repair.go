@@ -91,8 +91,8 @@ func Fix(d *model.Document, o Options) []string {
 			log = append(log, fmt.Sprintf("Removed empty entry %d", i+1))
 			continue
 		}
-		key := fmt.Sprintf("%d/%d/%s", e.Start, e.End, e.Text)
-		if o.Duplicates && seen[key] {
+		key := model.DuplicateKey(e)
+		if o.Duplicates && !e.Invalid && seen[key] {
 			log = append(log, fmt.Sprintf("Removed duplicate %d", i+1))
 			continue
 		}
