@@ -1,0 +1,11 @@
+7
+00:00:03,000 --> 00:00:05,000
+Hello, world.
+
+9
+00:00:04,500 --> 00:00:06,000
+Welcome to the subtitle workshop.
+
+9
+00:00:04,500 --> 00:00:06,000
+Welcome to the subtitle workshop.
