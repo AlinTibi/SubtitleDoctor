@@ -26,7 +26,7 @@ func checkRuntime() error {
 		return fmt.Errorf("WebView2 check failed: %w", e)
 	}
 	if version == "" {
-		return fmt.Errorf("Microsoft WebView2 Runtime is required. Install it separately before running Subtitle Doctor. No runtime will be downloaded")
+		return fmt.Errorf("Microsoft Edge WebView2 Runtime is required. Install it separately from https://developer.microsoft.com/microsoft-edge/webview2/ and restart Subtitle Doctor. Nothing is downloaded or installed automatically")
 	}
 	cmp, e := webviewloader.CompareBrowserVersions(version, "94.0.992.31")
 	if e != nil {

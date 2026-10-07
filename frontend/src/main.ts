@@ -646,32 +646,8 @@ function editAction(action: string) {
       const i = one();
       es.splice(i + 1, 0, { ...es[i], fields: es[i].fields?.slice() });
     }
-    if (action === "merge") {
-      if (ids.length < 2) throw new Error("Select at least two entries");
-      if (ids.some((v, i) => i > 0 && v !== ids[i - 1] + 1))
-        throw new Error("Select contiguous entries");
-      const items = ids.map((i) => es[i]);
-      es.splice(ids[0], ids.length, {
-        ...items[0],
-        start: Math.min(...items.map((e) => e.start)),
-        end: Math.max(...items.map((e) => e.end)),
-        text: items.map((e) => e.text).join("\n"),
-      });
-    }
-    if (action === "split") {
-      const i = one();
-      const e = es[i];
-      const words = e.text.split(/\s+/).filter(Boolean);
-      if (words.length < 2 || e.end - e.start < 2)
-        throw new Error("Entry needs two words and at least two milliseconds");
-      const cut = Math.ceil(words.length / 2);
-      const mid = Math.floor((e.start + e.end) / 2);
-      es.splice(
-        i,
-        1,
-        { ...e, end: mid, text: words.slice(0, cut).join(" ") },
-        { ...e, start: mid, text: words.slice(cut).join(" ") },
-      );
+    if (action === "merge" || action === "split") {
+      view.doc.entries = await api.EditCues(view.doc, ids, action);
     }
     if (action === "up" || action === "down") {
       const i = one();

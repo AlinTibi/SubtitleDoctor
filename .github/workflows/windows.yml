@@ -36,7 +36,7 @@ jobs:
           $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
           go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
       - name: Build Windows executable
-        run: wails build -clean -s
+        run: wails build -clean -s -webview2 browser
       - uses: actions/upload-artifact@v4
         with:
           name: SubtitleDoctor-windows-amd64

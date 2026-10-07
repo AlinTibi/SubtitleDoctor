@@ -58,7 +58,7 @@ jobs:
           $config.info.productVersion = $version
           [IO.File]::WriteAllText((Join-Path $PWD 'wails.json'), ($config | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
       - name: Build Windows executable
-        run: wails build -clean -s
+        run: wails build -clean -s -webview2 browser
       - name: Package portable ZIP and SHA-256
         run: |
           $tag = $env:GITHUB_REF_NAME

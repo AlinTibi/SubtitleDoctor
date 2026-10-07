@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 )
 
 type Options struct {
@@ -275,30 +274,11 @@ func Text(d *model.Document, o Operation) error {
 			if o.MaxChars < 10 || o.MaxLines < 1 {
 				return fmt.Errorf("line width must be ≥10 and line count ≥1")
 			}
-			words := strings.Fields(s)
-			lines := []string{}
-			line := ""
-			for _, w := range words {
-				if utf8.RuneCountInString(w) > o.MaxChars {
-					return fmt.Errorf("entry %d contains a word longer than the line limit", i+1)
-				}
-				if line != "" && utf8.RuneCountInString(line+" "+w) > o.MaxChars {
-					lines = append(lines, line)
-					line = w
-				} else {
-					if line != "" {
-						line += " "
-					}
-					line += w
-				}
+			var err error
+			s, err = markup.Wrap(s, o.MaxChars, o.MaxLines)
+			if err != nil {
+				return fmt.Errorf("entry %d: %w", i+1, err)
 			}
-			if line != "" {
-				lines = append(lines, line)
-			}
-			if len(lines) > o.MaxLines {
-				return fmt.Errorf("entry %d needs %d lines; raise the max lines limit", i+1, len(lines))
-			}
-			s = strings.Join(lines, "\n")
 		default:
 			return fmt.Errorf("unknown text tool")
 		}

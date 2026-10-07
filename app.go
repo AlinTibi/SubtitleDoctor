@@ -67,6 +67,14 @@ type Progress struct {
 }
 
 func NewApp() *App { return &App{files: map[string]*session.File{}, prefs: settings.Default()} }
+
+// EditCues validates the current UI draft without committing session history.
+func (a *App) EditCues(d model.Document, ids []int, action string) ([]model.Entry, error) {
+	if err := repair.EditCues(&d, ids, action); err != nil {
+		return nil, err
+	}
+	return d.Entries, nil
+}
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	s, e := settings.Load()

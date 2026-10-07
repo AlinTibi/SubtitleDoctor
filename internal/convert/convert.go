@@ -132,6 +132,9 @@ func Encode(d model.Document, target, encoding, lineEnding string, bom bool) ([]
 			if target == "vtt" && d.Format == target && len(e.Fields) > 1 {
 				b.WriteString(" " + e.Fields[1])
 			}
+			if target == "srt" && d.Format == target && len(e.Fields) > 0 {
+				b.WriteString(" " + e.Fields[0])
+			}
 			b.WriteString("\n" + text(e.Text, d.Format, target) + "\n\n")
 		}
 	}

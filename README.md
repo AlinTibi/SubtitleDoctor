@@ -15,6 +15,10 @@ is the current Windows x64 release.
 extract it, and run `SubtitleDoctor.exe`. Keep the extracted files together.
 Microsoft Edge WebView2 Runtime is required. Install it separately if missing.
 
+## v1.0.1 release candidate
+
+The next patch adds safer formatted cue splitting/wrapping, conservative cue merging and a distinct caption/check icon. See [candidate release notes](RELEASE_NOTES.md). v1.0.0 remains the public release.
+
 ## Screenshots
 
 ![Subtitle Doctor Windows application](docs/images/main.webp)
@@ -101,7 +105,7 @@ go vet ./...
 go test ./...
 $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
 go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
-wails build -clean -s
+wails build -clean -s -webview2 browser
 .\build\bin\SubtitleDoctor.exe
 ```
 
