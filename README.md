@@ -8,16 +8,16 @@ services, uploads, runtime PowerShell or runtime downloads.
 
 ## Current release and download
 
-[Subtitle Doctor v1.0.0](https://github.com/AlinTibi/SubtitleDoctor/releases/tag/v1.0.0)
+[Subtitle Doctor v1.0.1](https://github.com/AlinTibi/SubtitleDoctor/releases/tag/v1.0.1)
 is the current Windows x64 release.
 
-[Download the portable ZIP](https://github.com/AlinTibi/SubtitleDoctor/releases/download/v1.0.0/SubtitleDoctor-v1.0.0-win-x64.zip),
+[Download the portable ZIP](https://github.com/AlinTibi/SubtitleDoctor/releases/download/v1.0.1/SubtitleDoctor-v1.0.1-win-x64.zip),
 extract it, and run `SubtitleDoctor.exe`. Keep the extracted files together.
 Microsoft Edge WebView2 Runtime is required. Install it separately if missing.
 
-## v1.0.1 release candidate
+## v1.0.1 changes
 
-The next patch adds safer formatted cue splitting/wrapping, conservative cue merging and a distinct caption/check icon. See [candidate release notes](RELEASE_NOTES.md). v1.0.0 remains the public release.
+This patch adds safer formatted cue splitting/wrapping, conservative cue merging and a distinct caption/check icon. See [release notes](RELEASE_NOTES.md).
 
 ## Screenshots
 
