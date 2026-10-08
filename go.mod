@@ -1,11 +1,11 @@
 module github.com/AlinTibi/SubtitleDoctor
 
-go 1.25.0
+go 1.26.0
 
 require (
-	github.com/wailsapp/go-webview2 v1.0.22
+	github.com/wailsapp/go-webview2 v1.0.23
 	github.com/wailsapp/wails/v2 v2.16.0
-	golang.org/x/text v0.39.0
+	golang.org/x/text v0.42.0
 )
 
 require (
