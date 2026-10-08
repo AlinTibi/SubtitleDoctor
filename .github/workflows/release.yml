@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -14,17 +14,21 @@ concurrency:
 
 jobs:
   release:
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     runs-on: windows-latest
     defaults:
       run:
         shell: pwsh
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           go-version-file: go.mod
           cache: true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '22'
           cache: npm
@@ -55,6 +59,7 @@ jobs:
             if ([int64]$part -gt 65535) { throw 'Windows version components must be at most 65535' }
           }
           $config = Get-Content -LiteralPath wails.json -Raw | ConvertFrom-Json
+          if ($config.info.productVersion -ne $version) { throw 'Tag does not match checked-in product version' }
           $config.info.productVersion = $version
           [IO.File]::WriteAllText((Join-Path $PWD 'wails.json'), ($config | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
       - name: Build Windows executable
@@ -73,6 +78,11 @@ jobs:
           Compress-Archive -LiteralPath $files -DestinationPath $zipPath -CompressionLevel Optimal
           $hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
           [IO.File]::WriteAllText("$zipPath.sha256", "$hash  $zipName`n", [Text.UTF8Encoding]::new($false))
+      - name: Attest release ZIP provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: '${{ runner.temp }}/SubtitleDoctor-*-win-x64.zip'
+
       - name: Create GitHub release and upload both assets
         env:
           GH_TOKEN: ${{ github.token }}
